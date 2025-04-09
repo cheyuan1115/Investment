@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資產花光試算器</title>
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(to bottom, #f0f4f7, #ffffff);
+      padding: 2em;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2em;
+    }
+    h1 {
+      text-align: center;
+      color: #3b6f58;
+    }
+    label {
+      display: block;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 0.5em;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      margin-top: 0.5em;
+    }
+    button {
+      margin-top: 2em;
+      width: 100%;
+      padding: 0.75em;
+      background-color: #3b6f58;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2e5845;
+    }
+    .result {
+      margin-top: 2em;
+      text-align: center;
+      font-size: 1.2em;
+      color: #3b6f58;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>資產花光試算器</h1>
+    <label>本金（萬元）</label>
+    <input type="number" id="principal" placeholder="例如：8000">
+
+    <label>年利率（%）</label>
+    <input type="number" step="0.1" id="rate" placeholder="例如：5">
+
+    <label>每月支出（元）</label>
+    <input type="number" id="monthly" placeholder="例如：400000">
+
+    <button onclick="calculateDepletionTime()">計算資產可用年限</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    function calculateDepletionTime() {
+      let principal = parseFloat(document.getElementById('principal').value) * 10000;
+      let annualRate = parseFloat(document.getElementById('rate').value) / 100;
+      let monthlySpend = parseFloat(document.getElementById('monthly').value);
+      let monthlyRate = annualRate / 12;
+
+      let month = 0;
+      while (principal > 0) {
+        let interest = principal * monthlyRate;
+        principal += interest - monthlySpend;
+        if (principal <= 0) break;
+        month++;
+      }
+      let years = month / 12;
+      document.getElementById('result').innerHTML =
+        `資產約可撐 <strong>${month}</strong> 個月（約 <strong>${years.toFixed(1)}</strong> 年）`;
+    }
+  </script>
+</body>
+</html>

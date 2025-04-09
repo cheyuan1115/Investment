@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
+<!DOCTYPE html><html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +9,7 @@
       background: linear-gradient(to bottom, #f0f4f7, #ffffff);
       padding: 2em;
       color: #333;
+      overflow-x: hidden;
     }
     .container {
       max-width: 500px;
@@ -18,6 +18,8 @@
       border-radius: 1rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       padding: 2em;
+      position: relative;
+      z-index: 10;
     }
     h1 {
       text-align: center;
@@ -55,24 +57,40 @@
       font-size: 1.2em;
       color: #3b6f58;
     }
+    .fireworks {
+      font-size: 2em;
+      animation: pop 1s infinite;
+    }
+    @keyframes pop {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
+  <canvas id="fireworkCanvas"></canvas>
   <div class="container">
     <h1>資產花光試算器</h1>
     <label>本金（萬元）</label>
-    <input type="number" id="principal" placeholder="例如：8000">
+    <input type="number" id="principal" placeholder="例如：1000"><label>年利率（%）</label>
+<input type="number" step="0.1" id="rate" placeholder="例如：3">
 
-    <label>年利率（%）</label>
-    <input type="number" step="0.1" id="rate" placeholder="例如：5">
+<label>每月支出（萬元）</label>
+<input type="number" id="monthly" placeholder="例如：10">
 
-    <label>每月支出（萬元）</label>
-    <input type="number" id="monthly" placeholder="例如：40">
+<button onclick="calculateDepletionTime()">計算資產可用年限</button>
 
-    <button onclick="calculateDepletionTime()">計算資產可用年限</button>
+<div class="result" id="result"></div>
 
-    <div class="result" id="result"></div>
-  </div>
+  </div><audio id="sound" src="https://freesound.org/data/previews/275/275154_5121236-lq.mp3"></audio>
 
   <script>
     function calculateDepletionTime() {
@@ -81,8 +99,17 @@
       let monthlySpend = parseFloat(document.getElementById('monthly').value) * 10000;
       let monthlyRate = annualRate / 12;
 
+      let initialInterest = principal * monthlyRate;
+      if (initialInterest >= monthlySpend) {
+        document.getElementById('result').innerHTML =
+          `<div class="fireworks">🎉🎉 恭喜你已達財務自由！每月利息足以支應花費！ 🎉🎉</div>`;
+        document.getElementById("sound").play();
+        launchFireworks();
+        return;
+      }
+
       let month = 0;
-      while (principal > 0) {
+      while (principal > 0 && month < 1000*12) {
         let interest = principal * monthlyRate;
         principal += interest - monthlySpend;
         if (principal <= 0) break;
@@ -92,6 +119,45 @@
       document.getElementById('result').innerHTML =
         `資產約可撐 <strong>${month}</strong> 個月（約 <strong>${years.toFixed(1)}</strong> 年）`;
     }
-  </script>
-</body>
+
+    // 簡單煙火動畫
+    const canvas = document.getElementById("fireworkCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function launchFireworks() {
+      let count = 30;
+      let particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          dx: (Math.random() - 0.5) * 8,
+          dy: (Math.random() - 0.5) * 8,
+          radius: Math.random() * 3 + 2,
+          color: `hsl(${Math.random() * 360}, 100%, 60%)`
+        });
+      }
+      let duration = 60;
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          p.x += p.dx;
+          p.y += p.dy;
+          p.dy += 0.1;
+        });
+        if (frame < duration) {
+          requestAnimationFrame(animate);
+          frame++;
+        }
+      }
+      animate();
+    }
+  </script></body>
 </html>
